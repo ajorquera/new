@@ -15,8 +15,15 @@ The classifier on an Account that determines its Asset/Liability polarity and wh
 The brokerage or bank an Account is held at (e.g. eToro, Revolut). A tag on the Account, not a container or parent entity — Accounts are flat.
 
 **Value Snapshot**:
-A point-in-time record of an Account's value (amount, currency, date). Created event-based, whenever the value is updated — not on a fixed schedule. The series of snapshots is what makes net worth chartable over time.
+A point-in-time record of an Account's value (amount, currency, date). Created event-based, whenever the value is updated — not on a fixed schedule. The series of snapshots is what makes net worth chartable over time. When the Account's currency differs from the Base Currency, the snapshot also carries the FX Rate used to convert it, so the base-currency figure is fixed to that date rather than drifting with today's rate.
 _Avoid_: Valuation, History entry
+
+**Base Currency**:
+The single currency net worth is aggregated and reported in (EUR). Every Account keeps its own native currency; conversion to Base Currency happens only when combining Accounts into a net-worth figure.
+
+**FX Rate**:
+An exchange rate between an Account's currency and the Base Currency, fetched from a free external rate API and cached locally. Looked up for the specific date of a Value Snapshot (point-in-time), not a live/current rate — so a past net-worth figure doesn't change as today's rates move.
+_Avoid_: Conversion rate, exchange rate (as a live-only concept — an FX Rate here is always tied to a date)
 
 **Transaction**:
 A normalized row (date, amount, description) imported from a CSV statement into an Account. Distinct from a Value Snapshot: a snapshot is a value at a moment, a transaction is a discrete movement.

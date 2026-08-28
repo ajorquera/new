@@ -19,7 +19,9 @@ No stored counter — count it from the PR's own history: `gh pr view <pr> --jso
 Two axes:
 
 - **Spec** — does the change do what the issue asked and the design brief described? Flag scope creep and missed requirements alike.
-- **Standards** — does it fit the repo's existing conventions (or, if this is the first code in the area, is it internally consistent and reasonable)? Tests present for behavior changes? Nothing that looks unsafe (injection, secrets, obviously missing validation at a real trust boundary)?
+- **Standards** — does it fit the repo's existing conventions (or, if this is the first code in the area, is it internally consistent and reasonable)? Nothing that looks unsafe (injection, secrets, obviously missing validation at a real trust boundary)?
+
+**Tests, checked explicitly, every review**: every behavior change in the diff has a test covering it, and the implement phase's reported suite run actually passed (don't take "tests pass" on faith — re-run the suite yourself if the repo makes that cheap). A behavior change with no test, or a claimed-passing suite that doesn't actually pass, is `[blocking]` by default — not a judgment call like the rest of Standards.
 
 Severity: `[blocking]` only for something that must change before merge — verify each one has a concrete failure scenario (specific input/state → wrong output or crash) before posting it; drop anything you can't substantiate. Everything else is `[suggestion]`. When in doubt, suggestion.
 

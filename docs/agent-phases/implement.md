@@ -1,0 +1,41 @@
+# Implement phase
+
+Argument: `<issue>`, optionally a list of blocking review findings (fix-mode, see step 4).
+
+Implement the issue on its own branch and open (or update) a draft PR. Two modes, decided by whether blocking review findings were passed in.
+
+## 0. Inputs
+
+- `gh issue view <issue> --comments` — the issue plus the most recent `<!-- agent:research -->` comment. No research comment → stop and report a failure summary "no research found, explore phase must run first".
+- The most recent `<!-- agent:design -->` comment — its approach and decisions are what you build. No design comment → stop and report "no design found, design phase must run first".
+- If the repo already has established conventions (an existing stack, test setup, lint config), follow them. If this is the first code landing in the relevant area, the design brief's approach is the convention going forward — don't invent a second stack alongside an existing one.
+
+## 1. Branch
+
+Branch name: `agent/issue-<n>-<slug>` (slug from the issue title, kebab-case, ≤5 words). If the branch already exists locally or on the remote, check it out and continue on it — never create a duplicate.
+
+## 2. Implement
+
+Follow the design's approach. Honor its decisions rather than re-deciding them. Run typecheck/lint/tests as the repo provides them, as you go; run the full suite once before pushing. Every behavior change gets a test.
+
+If mid-implementation the design's approach turns out to be wrong, don't silently diverge: note the divergence and the reason in the PR summary.
+
+## 3. Draft PR
+
+Push the branch. If no open PR exists for it, create one:
+
+- `gh pr create --draft --title "<issue title> (#<n>)"`
+- Body: `Closes #<n>`, a link to the design comment, and a summary of the changes — what changed, why, how it was tested, any divergence from the brief.
+
+If a PR already exists, push and add a comment summarizing what this iteration changed.
+
+## 4. Fix-mode (invoked with blocking findings)
+
+1. Address **every** blocking finding — fix it, or if you believe it's wrong, reply to the inline comment explaining why (with evidence); never silently skip one.
+2. Reply to each addressed inline comment with a one-liner: what you changed.
+3. Suggestions are optional — apply the cheap ones, skip the rest without comment-spam.
+4. Run the full suite again, push, comment on the PR summarizing which findings were addressed.
+
+## Outcome
+
+Report the PR number/URL, a one-line summary of what changed, and test results — honestly, if something fails, say so.

@@ -26,7 +26,15 @@ An exchange rate between an Account's currency and the Base Currency, fetched fr
 _Avoid_: Conversion rate, exchange rate (as a live-only concept — an FX Rate here is always tied to a date)
 
 **Transaction**:
-A normalized row (date, amount, description) imported from a CSV statement into an Account. Distinct from a Value Snapshot: a snapshot is a value at a moment, a transaction is a discrete movement.
+A normalized row (date, amount, description) imported from a CSV statement into an Account. Distinct from a Value Snapshot: a snapshot is a value at a moment, a transaction is a discrete movement. A Transaction can carry multiple Categories; the full amount counts toward each tagged Category's spend total (not split across them).
+
+**Category**:
+A user-defined, flat spending label (Groceries, Rent, Dining, …) tagged onto a Transaction. Seeded with a starter set, freely added to/edited/deleted by the user. No hierarchy — a Transaction that spans two concepts (e.g. a Costco run) just carries both Categories rather than nesting one under the other.
+_Avoid_: Kind (that's the Account classifier, a different axis — a Transaction's Category has nothing to do with its Account's Kind)
+
+**Category Rule**:
+A user-defined rule that auto-tags a Transaction with one Category when the Transaction's normalized (lowercased, trimmed) description contains the rule's match string, optionally scoped to one Account. Every Rule whose condition matches a given Transaction applies — there's no precedence between Rules; each contributing Rule adds its Category alongside any others (rule-sourced or manually tagged). Each Transaction-Category tag records which Rule produced it (or that it was added manually), so editing or deleting a Rule can retroactively add/remove only the tags *that Rule* produced, leaving manually-tagged and other-Rules'-tagged Categories untouched.
+_Avoid_: Category (a Rule produces Category tags, it isn't one)
 
 **External Flow**:
 A Transaction tagged as money entering or leaving an Account from outside it (deposit, withdrawal, transfer, mortgage payment) — as opposed to the Account's value moving on its own (market appreciation, interest).

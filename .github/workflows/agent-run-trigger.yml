@@ -1,0 +1,44 @@
+name: Agent Run Trigger
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  issues: write
+
+jobs:
+  trigger:
+    if: contains(fromJSON('["agent:explore","agent:design","agent:implement","agent:review"]'), github.event.label.name)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check in-progress guard
+        id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh issue view "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --json labels --jq '.labels[].name' | grep -qx 'agent:in-progress'; then
+            echo "busy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "busy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Mark in-progress
+        if: steps.guard.outputs.busy == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue edit "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --add-label agent:in-progress
+
+      - name: Dispatch agent-runner
+        if: steps.guard.outputs.busy == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
+          LABEL_NAME: ${{ github.event.label.name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          phase="${LABEL_NAME#agent:}"
+          gh api repos/ajorquera/agent-runner/dispatches \
+            --method POST \
+            -f event_type=agent-run \
+            -f "client_payload[phase]=${phase}" \
+            -F "client_payload[issue_number]=${ISSUE_NUMBER}"

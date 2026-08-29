@@ -57,9 +57,26 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           phase="${LABEL_NAME#agent:}"
+          case "$phase" in
+            explore)
+              outcome_labels='{"READY":{"remove":["agent:explore"],"add":["agent:design"]},"BLOCKED":{"remove":["agent:explore"],"add":["agent:needs-human"]}}'
+              ;;
+            design)
+              outcome_labels='{"READY":{"remove":["agent:design"],"add":["agent:implement"]},"BLOCKED":{"remove":["agent:design"],"add":["agent:needs-human"]}}'
+              ;;
+            implement)
+              outcome_labels='{"READY":{"remove":["agent:implement"],"add":["agent:review"]},"BLOCKED":{"remove":["agent:implement"],"add":["agent:needs-human"]}}'
+              ;;
+            review)
+              outcome_labels='{"APPROVED":{"remove":[],"add":[]},"CHANGES_REQUESTED":{"remove":["agent:review"],"add":["agent:implement"]},"CHANGES_REQUESTED_CAPPED":{"remove":["agent:review"],"add":["agent:needs-human"]}}'
+              ;;
+          esac
           gh api repos/ajorquera/agent-runner/dispatches \
             --method POST \
             -f event_type=agent-run \
             -f "client_payload[prompt]=${TASK_PROMPT}" \
-            -f "client_payload[phase]=${phase}" \
-            -f "client_payload[issue_number]=${ISSUE_NUMBER}"
+            -f "client_payload[issue_repo]=ajorquera/new" \
+            -f "client_payload[issue_number]=${ISSUE_NUMBER}" \
+            -f 'client_payload[always_remove_labels]=["agent:in-progress"]' \
+            -f "client_payload[outcome_labels]=${outcome_labels}" \
+            -f 'client_payload[fallback_labels]={"remove":[],"add":["agent:needs-human"]}'

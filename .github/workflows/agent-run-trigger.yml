@@ -39,6 +39,6 @@ jobs:
           phase="${LABEL_NAME#agent:}"
           gh api repos/ajorquera/agent-runner/dispatches \
             --method POST \
-            -f event_type=agent-run \
+            -f event_type=agent-run-new \
             -f "client_payload[phase]=${phase}" \
             -F "client_payload[issue_number]=${ISSUE_NUMBER}"

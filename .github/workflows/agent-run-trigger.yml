@@ -40,26 +40,7 @@ jobs:
           {
             echo "You are working on the repo ajorquera/new, not the repo you were checked out in. First: \`gh repo clone ajorquera/new\` into a fresh directory and \`cd\` into it — GH_TOKEN is already set and authorized for this. Do all of the following work from inside that clone."
             echo
-            echo "Then follow the instructions in \`docs/agent-phases/${phase}.md\` exactly, for issue/PR #${ISSUE_NUMBER} in ajorquera/new."
-            echo
-            echo "When that's done, using \`gh issue edit ${ISSUE_NUMBER} --repo ajorquera/new\`:"
-            echo
-            echo "1. Always remove the label \`agent:in-progress\`."
-            echo "2. Then, based on the \`AGENT_OUTCOME:\` line you just reported for the \`${phase}\` phase, change the phase label per this table (only the row matching phase \`${phase}\` and your outcome applies):"
-            echo
-            echo '| phase     | AGENT_OUTCOME             | label change |'
-            echo '|---|---|---|'
-            echo '| explore   | READY                     | remove `agent:explore`, add `agent:design` |'
-            echo '| explore   | BLOCKED                   | remove `agent:explore`, add `agent:needs-human` |'
-            echo '| design    | READY                     | remove `agent:design`, add `agent:implement` |'
-            echo '| design    | BLOCKED                   | remove `agent:design`, add `agent:needs-human` |'
-            echo '| implement | READY                     | remove `agent:implement`, add `agent:review` |'
-            echo '| implement | BLOCKED                   | remove `agent:implement`, add `agent:needs-human` |'
-            echo '| review    | APPROVED                  | none — leave `agent:review` as-is, the approval comment is the completion signal |'
-            echo '| review    | CHANGES_REQUESTED         | remove `agent:review`, add `agent:implement` |'
-            echo '| review    | CHANGES_REQUESTED_CAPPED  | remove `agent:review`, add `agent:needs-human` |'
-            echo
-            echo "If you have to stop before reaching a phase's \`AGENT_OUTCOME:\` line at all (crash, unrecoverable error), still remove \`agent:in-progress\` and add \`agent:needs-human\` instead of the phase label."
+            echo "Then follow the instructions in \`docs/agent-phases/${phase}.md\` exactly, for issue/PR #${ISSUE_NUMBER} in ajorquera/new, ending with its \`AGENT_OUTCOME:\` trailer line. Do not edit the issue's \`agent:*\` labels yourself — the runner reads your \`AGENT_OUTCOME:\` line and does that afterward."
           } > "$RUNNER_TEMP/task_prompt.md"
           {
             echo "prompt<<PROMPT_EOF"
@@ -72,8 +53,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
           TASK_PROMPT: ${{ steps.prompt.outputs.prompt }}
+          LABEL_NAME: ${{ github.event.label.name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
+          phase="${LABEL_NAME#agent:}"
           gh api repos/ajorquera/agent-runner/dispatches \
             --method POST \
             -f event_type=agent-run \
-            -f "client_payload[prompt]=${TASK_PROMPT}"
+            -f "client_payload[prompt]=${TASK_PROMPT}" \
+            -f "client_payload[phase]=${phase}" \
+            -f "client_payload[issue_number]=${ISSUE_NUMBER}"

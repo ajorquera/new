@@ -16,9 +16,9 @@ Branch name: `agent/issue-<n>-<slug>` (slug from the issue title, kebab-case, �
 
 ## 2. Implement
 
-Follow the design's approach. Honor its decisions rather than re-deciding them. Run typecheck/lint/tests as the repo provides them, as you go; run the full suite once before pushing. Every behavior change gets a test — no exceptions for "small" or "obvious" changes. Do not open or update the PR if the suite doesn't pass; fix it first, or if a failure is pre-existing and unrelated, say so explicitly in the PR summary rather than silently pushing past it.
+Follow the design's approach. Honor its decisions rather than re-deciding them. Run typecheck/lint/tests as the repo provides them, as you go; run the full suite once before pushing. Every behavior change gets a test — no exceptions for "small" or "obvious" changes. Do not open or update the PR if the suite doesn't pass; fix it first, or if a failure is pre-existing and unrelated, say so explicitly in the PR summary rather than silently pushing past it. If the suite can't be made green, or the design's approach turns out to be blocked by something only a human can resolve, stop, comment on the issue explaining what's blocking it, and report `BLOCKED` (see Outcome) instead of opening a PR.
 
-If mid-implementation the design's approach turns out to be wrong, don't silently diverge: note the divergence and the reason in the PR summary.
+If mid-implementation the design's approach turns out to be wrong but still buildable, don't silently diverge: note the divergence and the reason in the PR summary.
 
 ## 3. Draft PR
 
@@ -38,4 +38,6 @@ If a PR already exists, push and add a comment summarizing what this iteration c
 
 ## Outcome
 
-Report the PR number/URL, a one-line summary of what changed, and test results — which tests were added, and confirmation the full suite passed. If something fails, say so honestly.
+Report the PR number/URL, a one-line summary of what changed, and test results — which tests were added, and confirmation the full suite passed. If something fails, say so honestly. End your final message with exactly one line, verbatim:
+
+`AGENT_OUTCOME: READY` (PR opened/updated, suite passing) or `AGENT_OUTCOME: BLOCKED` (no PR — suite couldn't be made green, or blocked on a human decision)

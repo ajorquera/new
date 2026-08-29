@@ -42,4 +42,6 @@ Asking a human is the last resort, not the first: a costly technical call still 
 
 ## Outcome
 
-Report `READY` or `BLOCKED` plus a one-line summary.
+Report `READY` or `BLOCKED` plus a one-line summary. End your final message with exactly one line, verbatim:
+
+`AGENT_OUTCOME: READY` or `AGENT_OUTCOME: BLOCKED`

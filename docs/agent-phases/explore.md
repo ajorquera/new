@@ -43,6 +43,7 @@ Include exactly one of **Reproduction** or **Current vs. desired behavior**, mat
 
 ## Outcome
 
-Report `READY` or `BLOCKED` plus a one-line summary. End your final message with exactly one line, verbatim:
+Report `READY` or `BLOCKED` plus a one-line summary. End your final message with exactly these two lines, verbatim:
 
 `AGENT_OUTCOME: READY` or `AGENT_OUTCOME: BLOCKED`
+`AGENT_COMMENT_TARGET: issue #<issue>`

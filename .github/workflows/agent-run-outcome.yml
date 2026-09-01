@@ -6,6 +6,7 @@ on:
 
 permissions:
   issues: write
+  pull-requests: write
 
 jobs:
   apply-labels:
@@ -14,6 +15,9 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       OUTCOME: ${{ github.event.client_payload.outcome }}
       CALLBACK_PAYLOAD: ${{ github.event.client_payload.callback_payload }}
+      RUN_URL: ${{ github.event.client_payload.run_url }}
+      COMMENT_TARGET_TYPE: ${{ github.event.client_payload.comment_target_type }}
+      COMMENT_TARGET_NUMBER: ${{ github.event.client_payload.comment_target_number }}
     steps:
       - name: Apply labels
         run: |
@@ -44,3 +48,21 @@ jobs:
           if [ "${#args[@]}" -gt 0 ]; then
             gh issue edit "$ISSUE_NUMBER" --repo "${{ github.repository }}" "${args[@]}"
           fi
+
+      - name: Post outcome comment
+        if: env.COMMENT_TARGET_TYPE != '' && env.COMMENT_TARGET_NUMBER != ''
+        run: |
+          body=$(printf '<!-- agent:run-outcome -->\n**Outcome:** %s\n[View agent-runner run](%s)' "$OUTCOME" "$RUN_URL")
+
+          case "$COMMENT_TARGET_TYPE" in
+            pr)
+              gh pr comment "$COMMENT_TARGET_NUMBER" --repo "${{ github.repository }}" --body "$body"
+              ;;
+            issue)
+              gh issue comment "$COMMENT_TARGET_NUMBER" --repo "${{ github.repository }}" --body "$body"
+              ;;
+            *)
+              echo "Unknown comment_target_type: $COMMENT_TARGET_TYPE" >&2
+              exit 1
+              ;;
+          esac

@@ -6,6 +6,7 @@ on:
 
 permissions:
   issues: write
+  pull-requests: write
 
 jobs:
   apply-labels:
@@ -14,18 +15,24 @@ jobs:
       GH_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
       OUTCOME: ${{ github.event.client_payload.outcome }}
       CALLBACK_PAYLOAD: ${{ github.event.client_payload.callback_payload }}
+      PR_NUMBER: ${{ github.event.client_payload.pr_number }}
     steps:
       - name: Apply labels
         run: |
-          ISSUE_NUMBER=$(jq -r '.issue_number' <<<"$CALLBACK_PAYLOAD")
+          # REMOVE_TARGET is wherever the triggering label actually lived (issue or PR).
+          # ADD_TARGET is the PR once the agent has reported one (implement/review phases) —
+          # this is how tracking hands off from the issue to its PR.
+          REMOVE_TARGET=$(jq -r '.issue_number' <<<"$CALLBACK_PAYLOAD")
+          ADD_TARGET="${PR_NUMBER:-$REMOVE_TARGET}"
           ALWAYS_REMOVE_LABELS=$(jq -c '.always_remove_labels' <<<"$CALLBACK_PAYLOAD")
           OUTCOME_LABELS=$(jq -c '.outcome_labels' <<<"$CALLBACK_PAYLOAD")
           FALLBACK_LABELS=$(jq -c '.fallback_labels' <<<"$CALLBACK_PAYLOAD")
 
-          args=()
+          remove_args=()
+          add_args=()
 
           while IFS= read -r label; do
-            args+=(--remove-label "$label")
+            remove_args+=(--remove-label "$label")
           done < <(jq -r '.[]' <<<"$ALWAYS_REMOVE_LABELS")
 
           plan=$(jq -c --arg outcome "$OUTCOME" '.[$outcome] // empty' <<<"$OUTCOME_LABELS")
@@ -34,13 +41,16 @@ jobs:
           fi
 
           while IFS= read -r label; do
-            args+=(--remove-label "$label")
+            remove_args+=(--remove-label "$label")
           done < <(jq -r '.remove[]?' <<<"$plan")
 
           while IFS= read -r label; do
-            args+=(--add-label "$label")
+            add_args+=(--add-label "$label")
           done < <(jq -r '.add[]?' <<<"$plan")
 
-          if [ "${#args[@]}" -gt 0 ]; then
-            gh issue edit "$ISSUE_NUMBER" --repo "${{ github.repository }}" "${args[@]}"
+          if [ "${#remove_args[@]}" -gt 0 ]; then
+            gh issue edit "$REMOVE_TARGET" --repo "${{ github.repository }}" "${remove_args[@]}"
+          fi
+          if [ "${#add_args[@]}" -gt 0 ]; then
+            gh issue edit "$ADD_TARGET" --repo "${{ github.repository }}" "${add_args[@]}"
           fi

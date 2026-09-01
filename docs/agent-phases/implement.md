@@ -38,6 +38,17 @@ If a PR already exists, push and add a comment summarizing what this iteration c
 
 ## Outcome
 
-Report the PR number/URL, a one-line summary of what changed, and test results — which tests were added, and confirmation the full suite passed. If something fails, say so honestly. End your final message with exactly one line, verbatim:
+Report the PR number/URL, a one-line summary of what changed, and test results — which tests were added, and confirmation the full suite passed. If something fails, say so honestly. End your final message with these trailer lines, verbatim:
 
-`AGENT_OUTCOME: READY` (PR opened/updated, suite passing) or `AGENT_OUTCOME: BLOCKED` (no PR — suite couldn't be made green, or blocked on a human decision)
+If a PR was opened/updated (suite passing):
+
+```
+AGENT_PR: <pr number>
+AGENT_OUTCOME: READY
+```
+
+If blocked before a PR was opened (suite couldn't be made green, or blocked on a human decision) — no `AGENT_PR` line, there's no PR to point at:
+
+```
+AGENT_OUTCOME: BLOCKED
+```

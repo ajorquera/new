@@ -12,25 +12,25 @@ jobs:
     if: contains(fromJSON('["agent:explore","agent:design","agent:implement","agent:review"]'), github.event.label.name)
     runs-on: ubuntu-latest
     steps:
-      - name: Check in-progress guard
+      - uses: actions/checkout@v4
+
+      - name: Decide
         id: guard
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh issue view "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --json labels --jq '.labels[].name' | grep -qx 'agent:in-progress'; then
-            echo "busy=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "busy=false" >> "$GITHUB_OUTPUT"
-          fi
+          issue_labels=$(gh issue view "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --json labels --jq '[.labels[].name] | join(",")')
+          decision=$(scripts/agent-run-trigger-decide.sh "${{ github.event.label.name }}" "$issue_labels")
+          echo "decision=$decision" >> "$GITHUB_OUTPUT"
 
       - name: Mark in-progress
-        if: steps.guard.outputs.busy == 'false'
+        if: steps.guard.outputs.decision == 'dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh issue edit "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --add-label agent:in-progress
 
       - name: Build task prompt
-        if: steps.guard.outputs.busy == 'false'
+        if: steps.guard.outputs.decision == 'dispatch'
         id: prompt
         env:
           LABEL_NAME: ${{ github.event.label.name }}
@@ -50,7 +50,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Dispatch agent-runner
-        if: steps.guard.outputs.busy == 'false'
+        if: steps.guard.outputs.decision == 'dispatch'
         env:
           GH_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
           TASK_PROMPT: ${{ steps.prompt.outputs.prompt }}

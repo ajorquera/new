@@ -54,7 +54,12 @@ jobs:
             echo
             echo "Then follow the instructions in \`docs/agent-phases/${phase}.md\` exactly, for issue/PR #${ISSUE_NUMBER} in ${REPO}, ending with its \`AGENT_OUTCOME:\` trailer line. Do not edit the issue's \`agent:*\` labels yourself — the runner reports your \`AGENT_OUTCOME:\` line back to this repo, which applies the label change afterward."
             echo
-            echo "Just before that final line, post one more comment on ${comment_target}: the result of this run (the same outcome you're about to report in the \`AGENT_OUTCOME:\` line, plus a one-line reason) and a link to this agent-runner run, so a human can see what happened without digging. Build the link as \`\${GITHUB_SERVER_URL}/\${GITHUB_REPOSITORY}/actions/runs/\${GITHUB_RUN_ID}\` — those env vars are already set in your shell."
+            echo "Just before that final line, post one more comment on ${comment_target}: the result of this run (the same outcome you're about to report in the \`AGENT_OUTCOME:\` line, plus a one-line reason) and a link to this agent-runner run, so a human can see what happened without digging. Link straight to the \"Run agent\" step, not the run overview — look it up and build it like this (\`GH_TOKEN\`, \`GITHUB_SERVER_URL\`, \`GITHUB_REPOSITORY\`, \`GITHUB_RUN_ID\` are already set in your shell):"
+            echo '```sh'
+            echo 'job_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs" --jq '"'"'.jobs[] | select(.name=="run") | .id'"'"')'
+            echo 'step_number=$(gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${job_id}" --jq '"'"'.steps[] | select(.name=="Run agent") | .number'"'"')'
+            echo 'link="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/job/${job_id}#step:${step_number}:1"'
+            echo '```'
           } > "$RUNNER_TEMP/task_prompt.md"
           {
             echo "prompt<<PROMPT_EOF"

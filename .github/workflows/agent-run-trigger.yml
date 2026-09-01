@@ -38,10 +38,23 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           phase="${LABEL_NAME#agent:}"
+          case "$phase" in
+            explore|design)
+              comment_target="issue #${ISSUE_NUMBER}"
+              ;;
+            implement)
+              comment_target="the PR you open or update for this issue (or issue #${ISSUE_NUMBER} if you report BLOCKED and never open one)"
+              ;;
+            review)
+              comment_target="the PR you're reviewing"
+              ;;
+          esac
           {
             echo "You are working on the repo ${REPO}, not the repo you were checked out in. First: \`gh repo clone ${REPO}\` into a fresh directory and \`cd\` into it — GH_TOKEN is already set and authorized for this. Do all of the following work from inside that clone."
             echo
             echo "Then follow the instructions in \`docs/agent-phases/${phase}.md\` exactly, for issue/PR #${ISSUE_NUMBER} in ${REPO}, ending with its \`AGENT_OUTCOME:\` trailer line. Do not edit the issue's \`agent:*\` labels yourself — the runner reports your \`AGENT_OUTCOME:\` line back to this repo, which applies the label change afterward."
+            echo
+            echo "Just before that final line, post one more comment on ${comment_target}: a link to this agent-runner run, so a human can see what happened. Build the link as \`\${GITHUB_SERVER_URL}/\${GITHUB_REPOSITORY}/actions/runs/\${GITHUB_RUN_ID}\` — those env vars are already set in your shell."
           } > "$RUNNER_TEMP/task_prompt.md"
           {
             echo "prompt<<PROMPT_EOF"

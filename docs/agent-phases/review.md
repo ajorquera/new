@@ -40,7 +40,6 @@ Never flip the PR to ready and never approve it (`gh pr review --approve` — Gi
 
 ## Outcome
 
-Report `APPROVED` or `CHANGES_REQUESTED`, the iteration number and whether it's at or past the cap, plus the list of blocking findings (file:line + one-liner each). End your final message with exactly these two lines, verbatim:
+Report `APPROVED` or `CHANGES_REQUESTED`, the iteration number and whether it's at or past the cap, plus the list of blocking findings (file:line + one-liner each). End your final message with exactly one line, verbatim:
 
 `AGENT_OUTCOME: APPROVED`, `AGENT_OUTCOME: CHANGES_REQUESTED`, or — if this iteration is at or past the cap — `AGENT_OUTCOME: CHANGES_REQUESTED_CAPPED`
-`AGENT_COMMENT_TARGET: pr #<pr>`

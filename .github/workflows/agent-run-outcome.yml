@@ -11,7 +11,7 @@ jobs:
   apply-labels:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
       OUTCOME: ${{ github.event.client_payload.outcome }}
       CALLBACK_PAYLOAD: ${{ github.event.client_payload.callback_payload }}
     steps:

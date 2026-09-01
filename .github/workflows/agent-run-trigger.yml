@@ -41,7 +41,7 @@ jobs:
           {
             echo "You are working on the repo ${REPO}, not the repo you were checked out in. First: \`gh repo clone ${REPO}\` into a fresh directory and \`cd\` into it — GH_TOKEN is already set and authorized for this. Do all of the following work from inside that clone."
             echo
-            echo "Then follow the instructions in \`docs/agent-phases/${phase}.md\` exactly, for issue/PR #${ISSUE_NUMBER} in ${REPO}, ending with its \`AGENT_OUTCOME:\` trailer line. Do not edit the issue's \`agent:*\` labels yourself — the runner reads your \`AGENT_OUTCOME:\` line and does that afterward."
+            echo "Then follow the instructions in \`docs/agent-phases/${phase}.md\` exactly, for issue/PR #${ISSUE_NUMBER} in ${REPO}, ending with its \`AGENT_OUTCOME:\` trailer line. Do not edit the issue's \`agent:*\` labels yourself — the runner reports your \`AGENT_OUTCOME:\` line back to this repo, which applies the label change afterward."
           } > "$RUNNER_TEMP/task_prompt.md"
           {
             echo "prompt<<PROMPT_EOF"
@@ -72,12 +72,14 @@ jobs:
               outcome_labels='{"APPROVED":{"remove":[],"add":[]},"CHANGES_REQUESTED":{"remove":["agent:review"],"add":["agent:implement"]},"CHANGES_REQUESTED_CAPPED":{"remove":["agent:review"],"add":["agent:needs-human"]}}'
               ;;
           esac
+          callback_payload=$(jq -nc \
+            --argjson issue_number "$ISSUE_NUMBER" \
+            --argjson outcome_labels "$outcome_labels" \
+            '{issue_number: $issue_number, always_remove_labels: ["agent:in-progress"], outcome_labels: $outcome_labels, fallback_labels: {remove: [], add: ["agent:needs-human"]}}')
           gh api "repos/${{ vars.AGENT_RUNNER_REPO }}/dispatches" \
             --method POST \
             -f event_type=agent-run \
             -f "client_payload[prompt]=${TASK_PROMPT}" \
-            -f "client_payload[issue_repo]=${{ github.repository }}" \
-            -f "client_payload[issue_number]=${ISSUE_NUMBER}" \
-            -f 'client_payload[always_remove_labels]=["agent:in-progress"]' \
-            -f "client_payload[outcome_labels]=${outcome_labels}" \
-            -f 'client_payload[fallback_labels]={"remove":[],"add":["agent:needs-human"]}'
+            -f "client_payload[callback_repo]=${{ github.repository }}" \
+            -f 'client_payload[callback_event_type]=agent-run-outcome' \
+            -f "client_payload[callback_payload]=${callback_payload}"

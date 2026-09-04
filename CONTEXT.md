@@ -26,7 +26,14 @@ An exchange rate between an Account's currency and the Base Currency, fetched fr
 _Avoid_: Conversion rate, exchange rate (as a live-only concept — an FX Rate here is always tied to a date)
 
 **Transaction**:
-A normalized row (date, amount, description) imported from a CSV statement into an Account. Distinct from a Value Snapshot: a snapshot is a value at a moment, a transaction is a discrete movement. A Transaction can carry multiple Categories; the full amount counts toward each tagged Category's spend total (not split across them).
+A normalized row (date, amount, currency, description, optional fee) imported from a source statement file into an Account via an Import Schema. Distinct from a Value Snapshot: a snapshot is a value at a moment, a transaction is a discrete movement. Preserves its original imported row and a key derived from it, so re-running an Import Run over an overlapping statement never creates duplicates. Belongs to exactly one Import Run. A Transaction can carry multiple Categories; the full amount counts toward each tagged Category's spend total (not split across them).
+
+**Import Schema**:
+A reusable, user-selectable definition of how one specific file shape (e.g. "eToro Account Activity sheet", "Revolut Personal CSV", one particular bank's report layout) translates into Transactions: where the real table starts (sheet, header row), how each Transaction field is populated (from a column, or a fixed value — some sources never state a field explicitly, e.g. eToro's Account Summary sheet has no currency column because it's implicitly USD), how ambiguous values are parsed (explicit date format and decimal style, never auto-detected), which rows to skip (e.g. a bank's non-completed transactions), and which raw values mean a Transaction is an External Flow. One mechanism serves both the schemas shipped built-in for known institutions and ones a user authors from scratch for an unrecognized source — authoring is the same regardless of who created it. A Schema describes a file shape, not an Account: the same eToro Schema applies every time you import from that source, and the target Account is chosen separately at each import.
+_Avoid_: Mapping, Importer (the Schema is the definition; importing is the act of applying it)
+
+**Import Run**:
+A record of one import: which Import Schema was applied, the source file, when, and how many Transactions resulted. Every Transaction it produced is linked to it, which is what makes reverting a bad import ("delete everything this run created") a single operation instead of a manual hunt.
 
 **Category**:
 A user-defined, flat spending label (Groceries, Rent, Dining, …) tagged onto a Transaction. Seeded with a starter set, freely added to/edited/deleted by the user. No hierarchy — a Transaction that spans two concepts (e.g. a Costco run) just carries both Categories rather than nesting one under the other.
@@ -37,7 +44,7 @@ A user-defined rule that auto-tags a Transaction with one Category when the Tran
 _Avoid_: Category (a Rule produces Category tags, it isn't one)
 
 **External Flow**:
-A Transaction tagged as money entering or leaving an Account from outside it (deposit, withdrawal, transfer, mortgage payment) — as opposed to the Account's value moving on its own (market appreciation, interest).
+A Transaction tagged as money entering or leaving an Account from outside it (deposit, withdrawal, transfer, mortgage payment) — as opposed to the Account's value moving on its own (market appreciation, interest). Set at import time by the Import Schema's classification rule, not by Category Rules: it's a structural fact about the Transaction, a different axis from user-meaning spending Categories.
 
 **Contribution** / **Growth**:
 The two components of change between two Value Snapshots. Contribution is the sum of External Flow transactions in that period; Growth is the remainder (value delta minus contributions). Distinguishes "net worth went up because I added money" from "net worth went up because it appreciated."
